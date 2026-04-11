@@ -17,9 +17,9 @@ jobs:
           clean: false
       - name: Restore library from cache
         run: |
-          CACHE_DIR="/root/unity-cache/${{ github.repository_id }}/Library-WebGL"
-          if [ -d "$CACHE_DIR" ]; then
-            rsync -a "$CACHE_DIR/" Library/
+          CACHE_FILE="/root/unity-cache/${{ github.repository_id }}/Library-WebGL.tar.zst"
+          if [ -f "$CACHE_FILE" ]; then
+            tar -I zstd -xf "$CACHE_FILE"
           fi
       - name: Check if build profile exists
         id: check_profile
@@ -51,10 +51,11 @@ jobs:
       - name: Save library to cache
         if: always()
         run: |
-          CACHE_DIR="/root/unity-cache/${{ github.repository_id }}/Library-WebGL"
+          CACHE_DIR="/root/unity-cache/${{ github.repository_id }}"
+          CACHE_FILE="$CACHE_DIR/Library-WebGL.tar.zst"
           if [ -d "Library" ]; then
-            mkdir -p "$(dirname "$CACHE_DIR")"
-            rsync -a --delete Library/ "$CACHE_DIR/"
+            mkdir -p "$CACHE_DIR"
+            tar -I 'zstd -T0 -8' -cf "$CACHE_FILE" Library/
           fi
       - name: Upload artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
