@@ -1,0 +1,78 @@
+name: Build for provided platform
+
+on: workflow_call
+
+jobs:
+  build:
+    name: Build WebGL and publish artifact
+    runs-on: self-hosted
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+          lfs: true
+          clean: false
+      - name: Restore library from cache
+        run: |
+          CACHE_DIR="/root/unity-cache/${{ github.repository_id }}/Library-WebGL"
+          if [ -d "$CACHE_DIR" ]; then
+            rsync -a "$CACHE_DIR/" Library/
+          fi
+      - name: Check if build profile exists
+        id: check_profile
+        run: |
+          PROFILE_PATH="Assets/Settings/Build Profiles/WebGL.asset"
+          if [ -f "$PROFILE_PATH" ]; then
+            echo "has_profile=true" >> $GITHUB_OUTPUT
+            echo "profile_path=$PROFILE_PATH" >> $GITHUB_OUTPUT
+          else
+            echo "has_profile=false" >> $GITHUB_OUTPUT
+            echo "profile_path=" >> $GITHUB_OUTPUT
+          fi
+      - name: Debug info
+        if: ${{ always() }}
+        run: |
+          echo "Is build profile detected?: ${{ steps.check_profile.outputs.has_profile }}"
+          echo "Profile path: ${{ steps.check_profile.outputs.profile_path || 'None' }}"
+      - name: Build project
+        uses: game-ci/unity-builder@1d4ee0697f193f54668e98961d79907911f4b4f2
+        id: unity-builder
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: WebGL
+          versioning: Tag
+          buildProfile: ${{ steps.check_profile.outputs.has_profile == 'true' && steps.check_profile.outputs.profile_path || null }}
+      - name: Save library to cache
+        if: always()
+        run: |
+          CACHE_DIR="/root/unity-cache/${{ github.repository_id }}/Library-WebGL"
+          if [ -d "Library" ]; then
+            mkdir -p "$(dirname "$CACHE_DIR")"
+            rsync -a --delete Library/ "$CACHE_DIR/"
+          fi
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
+        id: upload-artifact
+        with:
+          path: build/WebGL
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128
+        id: deployment

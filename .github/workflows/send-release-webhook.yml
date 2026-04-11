@@ -1,0 +1,40 @@
+name: Notify about release
+
+on:
+  workflow_call:
+    inputs:
+      releaseUrl:
+        description: "The url to the release"
+        required: false
+        type: string
+        default: "${{ github.repositoryUrl }}/releases/${{ inputs.releaseTag }}"
+      releaseTag:
+        description: "The tag of the release"
+        required: false
+        type: string
+        default: "latest"
+      webhookTitle:
+        description: "The title to use in the Discord webhook embed"
+        required: false
+        type: string
+        default: "New release of the game!"
+      webhookMessage:
+        description: "The message to send to the Discord webhook"
+        required: false
+        type: string
+        default: "A new release of the game is available! You can download it [here](${{ inputs.releaseUrl }}). Version `${{ inputs.releaseTag }}`."
+
+jobs:
+  notifyAboutRelease:
+    name: Send discord webhook if release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send discord webhook (release only)
+        uses: tsickert/discord-webhook@v7.0.0
+        with:
+          webhook-url: ${{ secrets.WEBHOOK_URL }}
+          embed-title: ${{ inputs.webhookTitle }}
+          embed-url: ${{ inputs.releaseUrl }}
+          embed-description: ${{ inputs.webhookMessage }}
+          embed-color: 1103120
+          embed-thumbnail-url: https://static.wikia.nocookie.net/nicos-nextbots/images/0/02/Chilly_high_res.png
