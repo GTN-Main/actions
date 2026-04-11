@@ -100,6 +100,19 @@ jobs:
           else
             echo "has_webhook=false" >> $GITHUB_OUTPUT
           fi
+      - name: Replace placeholders with content
+        id: format_webhook
+        env:
+          RAW_TITLE: ${{ inputs.webhookTitle }}
+          ARTIFACT_URL: ${{ steps.upload-artifact.outputs.artifact-url }}
+          TARGET_PLATFORM: ${{ inputs.targetPlatform }}
+        run: |
+          FORMATTED_TITLE="${RAW_TITLE//\$\{ARTIFACT_URL\}/$ARTIFACT_URL}"
+          FORMATTED_TITLE="${FORMATTED_TITLE//\$\{TARGET_PLATFORM\}/$TARGET_PLATFORM}"
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "final_title<<$EOF" >> "$GITHUB_OUTPUT"
+          echo -e "$FORMATTED_TITLE" >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
       - if: ${{ !startsWith(github.ref, 'refs/tags/') && steps.check_webhook.outputs.has_webhook == 'true' }}
         name: Send discord webhook if nightly
         uses: tsickert/discord-webhook@b217a69502f52803de774ded2b1ab7c282e99645
@@ -107,7 +120,7 @@ jobs:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
           embed-title: ${{ inputs.webhookTitle }}
           embed-url: ${{ steps.upload-artifact.outputs.artifact-url }}
-          embed-description: ${{ inputs.webhookMessage }}
+          embed-description: ${{ steps.format_webhook.outputs.final_title }}
           embed-color: 1103120
           embed-thumbnail-url: ${{ inputs.webhookThumbnailUrl }}
 
