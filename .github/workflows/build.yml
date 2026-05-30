@@ -27,7 +27,7 @@ on:
 jobs:
   build:
     name: ${{ inputs.targetPlatform }}
-    runs-on: blacksmith-8vcpu-ubuntu-2404
+    runs-on: self-hosted
     permissions:
       contents: write
     steps:
