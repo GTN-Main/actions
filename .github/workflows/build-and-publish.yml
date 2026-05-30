@@ -17,7 +17,7 @@ jobs:
           clean: false
       - name: Restore library from cache
         run: |
-          CACHE_FILE="/root/unity-cache/${{ github.repository_id }}/Library-WebGL.tar.zst"
+          CACHE_FILE="$HOME/unity-cache/${{ github.repository_id }}/Library-WebGL.tar.zst"
           if [ -f "$CACHE_FILE" ]; then
             tar -I zstd -xf "$CACHE_FILE"
           fi
@@ -51,7 +51,7 @@ jobs:
       - name: Save library to cache
         if: always()
         run: |
-          CACHE_DIR="/root/unity-cache/${{ github.repository_id }}"
+          CACHE_DIR="$HOME/unity-cache/${{ github.repository_id }}"
           CACHE_FILE="$CACHE_DIR/Library-WebGL.tar.zst"
           if [ -d "Library" ]; then
             mkdir -p "$CACHE_DIR"
