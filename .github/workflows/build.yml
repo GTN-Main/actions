@@ -135,7 +135,7 @@ jobs:
           dest: Build-${{ inputs.targetPlatform }}.zip
       - if: ${{ startsWith(github.ref, 'refs/tags/') }}
         name: Publish release if release
-        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda
         id: gh-release
         with:
           tag_name: ${{ github.ref_name }}
