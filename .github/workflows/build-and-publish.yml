@@ -48,6 +48,7 @@ jobs:
           targetPlatform: WebGL
           versioning: Tag
           buildProfile: ${{ steps.check_profile.outputs.has_profile == 'true' && steps.check_profile.outputs.profile_path || null }}
+          runAsHostUser: true
       - name: Save library to cache
         if: always()
         run: |
